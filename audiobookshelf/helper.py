@@ -3,8 +3,8 @@ from enum import Enum
 
 
 def camel(snake: str) -> str:
-    first, *others = snake.split('_')
-    return ''.join([first.lower(), *map(str.title, others)])
+    first, *others = snake.split("_")
+    return "".join([first.lower(), *map(str.title, others)])
 
 
 def remove_none_values(d: dict) -> dict:

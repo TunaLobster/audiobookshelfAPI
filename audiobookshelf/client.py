@@ -1,3 +1,4 @@
+from dataclasses import dataclass, asdict
 from typing import Optional, List
 
 import aiohttp
@@ -5,7 +6,7 @@ import aiofiles
 from aiohttp import ClientSession
 from audiobookshelf.helper import remove_none_values, build_url
 
-__all__ = ['ABSClient']
+__all__ = ["ABSClient"]
 
 
 class ABSClient:
@@ -14,143 +15,231 @@ class ABSClient:
 
     def __init__(self, base_url: str):
         self.base_url = base_url
-        if self.base_url[-1] != '/':
-            self.base_url += '/'
+        if self.base_url[-1] != "/":
+            self.base_url += "/"
 
-    async def _api_call(self,
-                        method: str,
-                        endpoint: str,
-                        data: dict,
-                        req_auth: bool = True,
-                        return_result: bool = True):
+    async def _api_call(
+        self,
+        method: str,
+        endpoint: str,
+        data: dict,
+        req_auth: bool = True,
+        return_result: bool = True,
+    ):
         if req_auth and self.user is None:
-            raise Exception('Missing Authorization')
+            raise Exception("Missing Authorization")
         async with ClientSession() as session:
             header = {}
             if req_auth:
-                header['Authorization'] = f'Bearer {self.user['token']}'
-            result = await session.request(method, f'{self.base_url}{endpoint}', json=data, headers=header)
+                header["Authorization"] = f"Bearer {self.user['token']}"
+            result = await session.request(
+                method, f"{self.base_url}{endpoint}", json=data, headers=header
+            )
             if result.status != 200:
-                raise Exception(f'Raised Error {result.status}')
+                raise Exception(f"Raised Error {result.status}")
             if return_result:
                 return await result.json()
 
     async def authorize(self, username: str, password: str):
-        data = await self._api_call('POST',
-                                    'login',
-                                    {'username': username, 'password': password},
-                                    req_auth=False)
-        self.user = data['user']
+        data = await self._api_call(
+            "POST",
+            "login",
+            {"username": username, "password": password},
+            req_auth=False,
+        )
+        self.user = data["user"]
 
     # Libraries
 
-    async def create_library(self,
-                             name: str,
-                             folders: List[str],
-                             icon: Optional[str] = None,
-                             media_type: Optional[str] = None,
-                             provider: Optional[str] = None,
-                             cover_aspect_ratio: Optional[bool] = None,
-                             disable_watcher: Optional[bool] = None,
-                             skip_matching_media_with_asin: Optional[bool] = None,
-                             skip_matching_media_with_isbn: Optional[bool] = None,
-                             auto_scan_cron_expression: Optional[str] = None) -> dict:
-        settings = remove_none_values({
-            'coverAspectRatio': (1 if cover_aspect_ratio else 0) if cover_aspect_ratio is not None else None,
-            'disableWatcher': disable_watcher,
-            'skipMatchingMediaWithAsin': skip_matching_media_with_asin,
-            'skipMatchingMediaWithIsbn': skip_matching_media_with_isbn,
-            'autoScanCronExpression': auto_scan_cron_expression
-        })
-        param = remove_none_values({
-            'name': name,
-            'folders': [{'fullPath': x} for x in folders],
-            'icon': icon,
-            'mediaType': media_type,
-            'provider': provider,
-            'settings': settings
-        })
-        data = await self._api_call('POST', 'api/libraries', param)
+    async def create_library(
+        self,
+        name: str,
+        folders: List[str],
+        icon: Optional[str] = None,
+        media_type: Optional[str] = None,
+        provider: Optional[str] = None,
+        cover_aspect_ratio: Optional[bool] = None,
+        disable_watcher: Optional[bool] = None,
+        skip_matching_media_with_asin: Optional[bool] = None,
+        skip_matching_media_with_isbn: Optional[bool] = None,
+        auto_scan_cron_expression: Optional[str] = None,
+    ) -> dict:
+        settings = remove_none_values(
+            {
+                "coverAspectRatio": (
+                    (1 if cover_aspect_ratio else 0)
+                    if cover_aspect_ratio is not None
+                    else None
+                ),
+                "disableWatcher": disable_watcher,
+                "skipMatchingMediaWithAsin": skip_matching_media_with_asin,
+                "skipMatchingMediaWithIsbn": skip_matching_media_with_isbn,
+                "autoScanCronExpression": auto_scan_cron_expression,
+            }
+        )
+        param = remove_none_values(
+            {
+                "name": name,
+                "folders": [{"fullPath": x} for x in folders],
+                "icon": icon,
+                "mediaType": media_type,
+                "provider": provider,
+                "settings": settings,
+            }
+        )
+        data = await self._api_call("POST", "api/libraries", param)
         return data
 
     async def get_libraries(self) -> dict:
-        data = await self._api_call('GET', 'api/libraries', {})
-        return data['libraries']
+        data = await self._api_call("GET", "api/libraries", {})
+        return data["libraries"]
 
-    async def get_library(self,
-                          library_id: str,
-                          include: Optional[List[str]] = None) -> List[dict]:
-        param = remove_none_values({
-            'include': ','.join(include) if include is not None else None
-        })
-        data = await self._api_call('GET', f'api/libraries/{library_id}', param)
+    async def get_library(
+        self, library_id: str, include: Optional[List[str]] = None
+    ) -> List[dict]:
+        param = remove_none_values(
+            {"include": ",".join(include) if include is not None else None}
+        )
+        data = await self._api_call("GET", f"api/libraries/{library_id}", param)
         return data
 
     async def delete_library(self, library_id: str):
-        await self._api_call('DELETE', f'api/libraries/{library_id}', {})
+        await self._api_call("DELETE", f"api/libraries/{library_id}", {})
 
     async def get_library_authors(self, library_id: str) -> dict:
-        data = await self._api_call('GET', f'api/libraries/{library_id}/authors', {})
-        return data['authors']
+        data = await self._api_call("GET", f"api/libraries/{library_id}/authors", {})
+        return data["authors"]
 
     async def delete_author(self, author_id: str):
-        await self._api_call('DELETE', f'api/authors/{author_id}', {}, return_result=False)
+        await self._api_call(
+            "DELETE", f"api/authors/{author_id}", {}, return_result=False
+        )
 
-    async def get_sessions_page(self, user_id: str, items_per_page: Optional[int] = None, page: Optional[int] = None) -> dict:
-        param = remove_none_values({
-            'user': user_id,
-            'itemsPerPage': items_per_page,
-            'page': page
-        })
-        data = await self._api_call('GET', build_url('api/sessions', param), {})
+    async def get_sessions_page(
+        self,
+        user_id: str,
+        items_per_page: Optional[int] = None,
+        page: Optional[int] = None,
+    ) -> dict:
+        param = remove_none_values(
+            {"user": user_id, "itemsPerPage": items_per_page, "page": page}
+        )
+        data = await self._api_call("GET", build_url("api/sessions", param), {})
         return data
 
     async def get_user_year_stats(self, year: int) -> dict:
-        return await self._api_call('GET', f'api/me/stats/year/{year}', {})
+        return await self._api_call("GET", f"api/me/stats/year/{year}", {})
 
-    async def get_library_items(self,
-                                library_id: str,
-                                limit: Optional[int] = None,
-                                page: Optional[int] = None,
-                                sort: Optional[str] = None,
-                                desc: Optional[bool] = None,
-                                _filter: Optional[str] = None,
-                                minified: Optional[bool] = None,
-                                collapse_series: Optional[bool] = None,
-                                include: Optional[str] = None) -> dict:
-        param = remove_none_values({
-            'limit': limit,
-            'page': page,
-            'sort': sort,
-            'desc': desc,
-            'filter': _filter,
-            'minified': minified,
-            'collapseseries': collapse_series,
-            'include': include
-        })
-        return await self._api_call('GET', build_url(f'api/libraries/{library_id}/items', param), {})
+    async def get_library_items(
+        self,
+        library_id: str,
+        limit: Optional[int] = None,
+        page: Optional[int] = None,
+        sort: Optional[str] = None,
+        desc: Optional[bool] = None,
+        _filter: Optional[str] = None,
+        minified: Optional[bool] = None,
+        collapse_series: Optional[bool] = None,
+        include: Optional[str] = None,
+    ) -> dict:
+        param = remove_none_values(
+            {
+                "limit": limit,
+                "page": page,
+                "sort": sort,
+                "desc": desc,
+                "filter": _filter,
+                "minified": minified,
+                "collapseseries": collapse_series,
+                "include": include,
+            }
+        )
+        data = await self._api_call(
+            "GET", build_url(f"api/libraries/{library_id}/items", param), {}
+        )
+        return data
 
-    async def get_library_item(self,
-                               item_id: str,
-                               expanded: bool = False,
-                               include: List[str] = None,
-                               episode: Optional[str] = None) -> dict:
-        include = ','.join(include) if include is not None else None
-        param = remove_none_values({
-            'expanded': 1 if expanded else 0,
-            'include': include,
-            'episode': episode
-        })
-        return await self._api_call('GET', build_url(f'api/items/{item_id}', param), {})
+    async def get_library_item(
+        self,
+        item_id: str,
+        expanded: bool = False,
+        include: List[str] = None,
+        episode: Optional[str] = None,
+    ) -> dict:
+        include = ",".join(include) if include is not None else None
+        param = remove_none_values(
+            {"expanded": 1 if expanded else 0, "include": include, "episode": episode}
+        )
+        data = await self._api_call("GET", build_url(f"api/items/{item_id}", param), {})
+        return data
 
-    async def download_file(self,
-                            library_item_id: str,
-                            ino: str,
-                            target_path: str):
-        url = build_url(f'{self.base_url}/api/items/{library_item_id}/file/{ino}/download', {'token': self.user['token']})
+    async def download_file(self, library_item_id: str, ino: str, target_path: str):
+        url = build_url(
+            f"{self.base_url}/api/items/{library_item_id}/file/{ino}/download",
+            {"token": self.user["token"]},
+        )
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if response.status == 200:
-                    f = await aiofiles.open(target_path, mode='wb')
+                    f = await aiofiles.open(target_path, mode="wb")
                     await f.write(await response.read())
                     await f.close()
+
+    # Playlists
+    @dataclass
+    class PlaylistItem:
+        libraryItemId: str
+        episodeId: str = None
+
+    async def create_playlist(
+        self,
+        library_id: str,
+        name: str,
+        description: Optional[str] = None,
+        coverPath: Optional[str] = None,
+        items: List[PlaylistItem] = [],
+    ) -> dict:
+        param = remove_none_values(
+            {
+                "libraryId": library_id,
+                "name": name,
+                "description": description,
+                "coverPath": coverPath,
+                "items": [asdict(item) for item in items],
+            }
+        )
+        return await self._api_call("POST", "api/playlists", param)
+
+    async def get_user_playlists(self) -> dict:
+        data = await self._api_call("GET", "api/playlists", {})
+        return data["playlists"]
+
+    async def get_playlist(self, playlist_id: str) -> dict:
+        return await self._api_call("GET", f"api/playlists/{playlist_id}", {})
+
+    async def update_playlist(
+        self,
+        playlist_id: str,
+        name: str,
+        description: Optional[str] = None,
+        coverPath: Optional[str] = None,
+        items: List[PlaylistItem] = [],
+    ) -> dict:
+        param = remove_none_values(
+            {
+                "name": name,
+                "description": description,
+                "coverPath": coverPath,
+                "items": [asdict(item) for item in items],
+            }
+        )
+        return await self._api_call("POST", f"api/playlists/{playlist_id}", param)
+
+    async def delete_playlist(self, playlist_id: str):
+        return await self._api_call("DELETE", f"api/playlists/{playlist_id}")
+
+    # Me
+    async def get_library_items_in_progress(self, limit: Optional[int] = None) -> list:
+        return await self._api_call(
+            "GET", "api/me/items-in-progress", remove_none_values({"limit": limit})
+        )
