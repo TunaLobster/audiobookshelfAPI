@@ -5,7 +5,7 @@ version = ""
 with open("audiobookshelf/__init__.py") as f:
     for line in f.readlines():
         if line.startswith("__version__"):
-            version = line.split("= '")[-1][:-2].strip()
+            version = line.split("= \"")[-1][:-2].strip()
 
 if version.endswith(("a", "b", "rc")):
     try:
