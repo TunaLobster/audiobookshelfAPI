@@ -186,7 +186,7 @@ class ABSClient:
                     await f.close()
 
     # Playlists
-    @dataclass
+    @dataclass(frozen=True)  # freezing to allow hashing
     class PlaylistItem:
         libraryItemId: str
         episodeId: str = None
