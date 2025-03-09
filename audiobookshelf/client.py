@@ -233,7 +233,7 @@ class ABSClient:
                 "items": [asdict(item) for item in items],
             }
         )
-        return await self._api_call("POST", f"api/playlists/{playlist_id}", param)
+        return await self._api_call("PATCH", f"api/playlists/{playlist_id}", param)
 
     async def delete_playlist(self, playlist_id: str):
         return await self._api_call("DELETE", f"api/playlists/{playlist_id}")
