@@ -238,6 +238,30 @@ class ABSClient:
     async def delete_playlist(self, playlist_id: str):
         return await self._api_call("DELETE", f"api/playlists/{playlist_id}")
 
+    async def playlist_batch_add(
+        self, playlist_id: str, items: List[PlaylistItem] = []
+    ):
+        param = remove_none_values(
+            {
+                "items": [asdict(item) for item in items],
+            }
+        )
+        return await self._api_call(
+            "POST", f"api/playlists/{playlist_id}/batch/add", param
+        )
+
+    async def playlist_batch_remove(
+        self, playlist_id: str, items: List[PlaylistItem] = []
+    ):
+        param = remove_none_values(
+            {
+                "items": [asdict(item) for item in items],
+            }
+        )
+        return await self._api_call(
+            "POST", f"api/playlists/{playlist_id}/batch/remove", param
+        )
+
     # Me
     async def get_library_items_in_progress(self, limit: Optional[int] = None) -> list:
         return await self._api_call(
