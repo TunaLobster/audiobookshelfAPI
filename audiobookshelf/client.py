@@ -36,7 +36,7 @@ class ABSClient:
                 method, f"{self.base_url}{endpoint}", json=data, headers=header
             )
             if result.status != 200:
-                raise Exception(f"Raised Error {result.status}")
+                raise Exception(f"Raised Error {result.status}: {await result.text()}")
             if return_result:
                 return await result.json()
 
